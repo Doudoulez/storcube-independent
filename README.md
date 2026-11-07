@@ -4,7 +4,7 @@
 
 ### Plusieurs modules. Une batterie virtuelle. Une seule configuration.
 
-![Version 0.4.3](https://img.shields.io/badge/version-0.4.3-2f855a?style=for-the-badge)
+![Version 0.4.4](https://img.shields.io/badge/version-0.4.3-2f855a?style=for-the-badge)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-custom%20integration-18BCF2?style=for-the-badge&logo=homeassistant&logoColor=white)
 ![Données](https://img.shields.io/badge/données-temps%20réel-805ad5?style=for-the-badge)
 
@@ -98,6 +98,3 @@ La connexion utilise les points d’accès cloud privés de Baterway. Le format 
 
 Ce projet est communautaire, indépendant et sans affiliation avec StorCube. Le code de connexion s’appuie sur l’observation publique du protocole utilisée par `fwPunsher/batteryMqtt` ; l’intégration Home Assistant est écrite séparément.
 
-## Publication
-
-Les instructions pour envoyer ce dépôt sur GitHub et publier une release sont dans [PUBLICATION.md](PUBLICATION.md).
