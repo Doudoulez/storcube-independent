@@ -1,44 +1,103 @@
-# StorCube Batteries (indépendant)
+<div align="center">
 
-> Cette intégration communautaire est indépendante de StorCube. Elle n’est pas encore publiée : le dossier doit d’abord être envoyé dans un dépôt GitHub public et ses métadonnées finalisées. Voir [PUBLICATION.md](PUBLICATION.md).
+# StorCube Batteries pour Home Assistant
 
-À partir de Home Assistant 2026.11, l’installation d’intégrations via l’ancien HACS est bloquée ; utilise le Marketplace Home Assistant une fois le dépôt publié et accepté dans son catalogue. Sur les versions antérieures qui le permettent, le dépôt peut être ajouté comme dépôt personnalisé HACS.
+### Plusieurs modules. Une batterie virtuelle. Une seule configuration.
 
-Intégration Home Assistant autonome écrite spécialement pour connecter une ou plusieurs batteries StorCube via le cloud Baterway. Elle ne reprend pas le code d’une autre intégration Home Assistant. Le dépôt `fwPunsher/batteryMqtt` a uniquement servi de référence publique pour comprendre les messages de connexion MQTT/WebSocket de Baterway.
+![Version 0.4.3](https://img.shields.io/badge/version-0.4.3-2f855a?style=for-the-badge)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-custom%20integration-18BCF2?style=for-the-badge&logo=homeassistant&logoColor=white)
+![Données](https://img.shields.io/badge/données-temps%20réel-805ad5?style=for-the-badge)
 
-## Fonctionnement
+![Schéma de la pile StorCube : le maître découvre l’esclave et Home Assistant crée une batterie virtuelle](docs/images/storcube-stack.svg)
 
-- Connexion au compte de l’application StorCube.
-- Connexion temps réel au WebSocket Baterway.
-- Saisie de l’identifiant de chaque batterie à interroger, maître et esclave compris. Le maître seul peut ne transmettre que ses propres mesures; ajoute l’identifiant de l’esclave pour recevoir ses valeurs.
-- Capteurs individuels pour chaque batterie reçue.
-- Réglages modifiables depuis Home Assistant : puissance de sortie cible (W) et seuil de réserve (%), envoyés à l’API Baterway.
-- Un appareil « Batterie virtuelle StorCube » regroupant les mesures reçues : charge moyenne, énergie restante totale, puissance solaire totale, puissance vers onduleur totale, puissance batterie estimée et nombre de modules.
-- Diagnostic téléchargeable avec les trames brutes expurgées des identifiants du compte, des séries et des jetons.
-- Seuls les paramètres identifiés sont créés en capteurs; les champs API inconnus restent masqués.
-- Compteurs cumulés en kWh pour l’énergie chargée, l’énergie déchargée, le solaire (MPPT 1, MPPT 2, total) et l’énergie vers onduleur. Les compteurs sont restaurés après redémarrage.
+</div>
 
-La charge globale est la moyenne simple des modules découverts. L’énergie restante est la somme des champs `capacity`. La puissance solaire et la puissance vers onduleur utilisent les totaux de la pile lorsqu’ils sont fournis; sinon, les valeurs des modules sont additionnées. La puissance batterie utilise le champ direct s’il est présent; sinon elle est estimée comme le solaire moins la puissance vers onduleur. Les entités utilisent les icônes batterie, solaire et éclair appropriées.
+Une intégration communautaire indépendante pour suivre une pile de batteries StorCube dans Home Assistant. Elle récupère les mesures du cloud Baterway, crée un appareil par module détecté et calcule des capteurs agrégés pour la pile.
 
-## Installation manuelle
+> **À saisir : uniquement l’identifiant de la batterie maître.** L’intégration demande à Baterway la liste des modules de la pile et découvre la batterie esclave automatiquement. Ne saisis pas l’identifiant de l’esclave dans le champ initial.
 
-1. Copiez `custom_components/storcube_independent` dans `config/custom_components/`.
-2. Redémarrez Home Assistant.
-3. Ouvrez **Paramètres → Appareils et services → Ajouter une intégration**.
-4. Recherchez **StorCube Batteries (indépendant)**.
-5. Saisissez l’identifiant du maître, le compte et le mot de passe de l’application. Le code application par défaut est `Storcube`.
-6. Ouvrez **Configurer** sur l’intégration et ajoutez l’identifiant de l’esclave dans **Identifiants de tous les modules**, séparé de celui du maître par une virgule. La batterie virtuelle regroupera les deux.
+## Comment ça marche ?
 
-Dans **Paramètres → Tableaux de bord → Énergie → Batteries**, sélectionnez sur la batterie virtuelle **Énergie déchargée de la batterie** pour l’énergie fournie, puis **Énergie chargée dans la batterie** pour l’énergie reçue. Les deux compteurs sont des capteurs d’énergie cumulée en kWh; la charge (%) et l’énergie restante (Wh) apparaissent comme mesures de la batterie. Home Assistant attend des capteurs d’énergie avec `device_class: energy` et `state_class: total` ou `total_increasing` pour l’Energy Dashboard ([documentation](https://www.home-assistant.io/docs/energy/faq/)).
+1. Tu renseignes l’identifiant du **maître** et les identifiants de ton compte StorCube.
+2. L’intégration lit la composition de la pile dans Baterway et ajoute les modules trouvés à l’abonnement temps réel.
+3. Home Assistant crée les capteurs du maître, de l’esclave détecté et de la **Batterie virtuelle StorCube**.
 
-Après remplacement d’une version déjà installée, redémarrez Home Assistant. Les capteurs restent indisponibles jusqu’à la réception d’une première trame du cloud; laissez quelques minutes au WebSocket pour s’abonner et publier les mesures.
+![La batterie virtuelle regroupe les mesures de tous les modules](docs/images/storcube-virtual-battery.svg)
 
-Les mesures changent au fil des trames WebSocket. Les deux commandes d’écriture connues dans batteryMqtt sont la puissance cible et le seuil de décharge/réserve (clé `reserved`/`threshold`). Leur prise en compte physique dépend de l’API et du modèle de batterie. Les champs qui ne sont que lus restent des capteurs.
+La découverte automatique dépend de la liste de modules retournée par le compte Baterway. Il faut que l’esclave soit bien associé à la pile dans l’application StorCube. Si l’esclave n’apparaît pas après quelques minutes, la page **Configurer** permet d’ajouter son identifiant manuellement en dépannage.
 
-## Limites
+## Fonctionnalités
 
-L’API Baterway est privée et non documentée. Les points d’accès observés utilisent HTTP et WebSocket non chiffrés; la connexion passe par le cloud et ne fonctionne donc pas hors ligne. Le format des trames peut changer. Cette première version n’a pas été validée avec une batterie physique dans cet environnement. Si les trames ne correspondent pas à votre micrologiciel, les journaux de `custom_components.storcube_independent` aideront à adapter le parseur.
+- Mesures reçues en direct via le WebSocket Baterway.
+- Capteurs individuels pour chaque batterie reconnue : charge, énergie restante, puissances, température, états, firmware et paramètres connus.
+- Batterie virtuelle avec charge moyenne, énergie restante cumulée, puissances agrégées et nombre de modules.
+- Réglage de la puissance de sortie et du seuil de décharge/réserve depuis Home Assistant.
+- Compteurs cumulés en kWh pour les énergies chargée, déchargée, solaire (MPPT 1, MPPT 2 et total) et envoyée vers l’onduleur.
+- Diagnostics téléchargeables pour aider à identifier les champs renvoyés par Baterway.
+- Les champs inconnus ne sont pas transformés en capteurs ordinaires.
 
-Pour identifier les champs renvoyés par chaque batterie, télécharge les diagnostics après avoir renseigné les identifiants du maître et de l’esclave. Le fichier comprend les dernières trames brutes et leurs valeurs, avec les mots de passe, jetons et identifiants de batterie retirés. Ne partage jamais le mot de passe ni le jeton d’accès.
+La puissance et l’énergie totales utilisent les totaux de la pile lorsqu’ils sont fournis par l’API. Sinon, l’intégration additionne les modules. La charge de la batterie virtuelle est la moyenne des modules disponibles.
 
-Cette intégration est un projet communautaire indépendant, sans affiliation avec StorCube.
+## Installation
+
+### Home Assistant 2026.11 et versions ultérieures
+
+Le dépôt doit être public et publié au Marketplace Home Assistant. Une fois le dépôt ajouté au catalogue, installe **StorCube Batteries (indépendant)** depuis le Marketplace.
+
+### Versions précédentes avec HACS
+
+Dans HACS, ajoute le dépôt comme dépôt personnalisé de type **Intégration**, puis installe l’intégration et redémarre Home Assistant.
+
+### Installation manuelle
+
+1. Copie le dossier `custom_components/storcube_independent` dans le dossier `config/custom_components/` de Home Assistant.
+2. Redémarre Home Assistant.
+3. Va dans **Paramètres → Appareils et services → Ajouter une intégration**.
+4. Recherche **StorCube Batteries (indépendant)**.
+
+## Configuration
+
+Dans le formulaire de configuration, saisis :
+
+| Champ | Valeur |
+| --- | --- |
+| Identifiants des batteries | **L’identifiant du maître uniquement** |
+| Identifiant du compte | Ton identifiant de connexion à l’application StorCube |
+| Mot de passe | Le mot de passe de ton compte |
+| Code application | `Storcube`, sauf si ton compte utilise un autre code Baterway |
+
+Laisse l’esclave hors du champ initial : il est découvert via la composition de la pile fournie par Baterway. Après la configuration, attends une ou deux minutes que le premier relevé arrive. Tu devrais voir les appareils **Batterie StorCube [identifiant]** et **Batterie virtuelle StorCube**.
+
+Pour vérifier la découverte : ouvre l’appareil **StorCube** dans **Paramètres → Appareils et services → Appareils** et regarde si les deux modules sont présents. Si l’esclave manque, vérifie son association dans l’application StorCube, puis utilise **Configurer** pour ajouter manuellement son identifiant en dépannage.
+
+## Tableau Énergie
+
+Dans **Paramètres → Tableaux de bord → Énergie → Batteries**, sélectionne sur la batterie virtuelle :
+
+- **Énergie déchargée de la batterie** pour l’énergie fournie à la maison ;
+- **Énergie chargée dans la batterie** pour l’énergie reçue.
+
+Les deux capteurs sont des compteurs cumulés en kWh. La charge (%) et l’énergie restante (Wh) servent de mesures de la batterie. Home Assistant demande des capteurs d’énergie avec une classe d’appareil énergie et un état cumulatif pour son tableau de bord [Énergie](https://www.home-assistant.io/docs/energy/faq/).
+
+## Dépannage
+
+### L’esclave n’apparaît pas
+
+1. Confirme que le maître et l’esclave sont associés dans l’application StorCube.
+2. Vérifie que l’intégration a été configurée avec l’identifiant du maître.
+3. Attends quelques minutes : la composition de pile est interrogée périodiquement et l’abonnement temps réel est ensuite actualisé.
+4. Si l’esclave reste absent, ouvre **Configurer** sur l’intégration et ajoute son identifiant manuellement. Télécharge les diagnostics si tu veux examiner les trames reçues.
+
+### Les capteurs sont indisponibles
+
+Les capteurs restent indisponibles jusqu’à la première trame de mesure. Vérifie la connexion Internet, les identifiants du compte et les journaux de `custom_components.storcube_independent`.
+
+## Confidentialité et limites
+
+La connexion utilise les points d’accès cloud privés de Baterway. Le format et certains champs peuvent varier selon le modèle ou le firmware. Ne partage jamais ton mot de passe, un jeton d’accès ou un diagnostic sans vérifier qu’il est expurgé.
+
+Ce projet est communautaire, indépendant et sans affiliation avec StorCube. Le code de connexion s’appuie sur l’observation publique du protocole utilisée par `fwPunsher/batteryMqtt` ; l’intégration Home Assistant est écrite séparément.
+
+## Publication
+
+Les instructions pour envoyer ce dépôt sur GitHub et publier une release sont dans [PUBLICATION.md](PUBLICATION.md).
