@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "StorCube Batteries (independent)",
+        "description": "Enter every battery ID to query, including master and slave, separated by commas or new lines. The master may not report the slave measurements.",
+        "data": {
+          "device_ids": "Battery IDs",
+          "login_name": "StorCube account login",
+          "password": "Password",
+          "app_code": "Application code"
+        },
+        "data_description": {
+          "device_ids": "Add the ID of every module whose values you want to read, including the slave.",
+          "app_code": "Keep Storcube unless your account uses another Baterway application."
+        }
+      }
+    },
+    "error": {
+      "no_device_ids": "Enter at least one battery ID.",
+      "invalid_auth": "Baterway rejected the account or password.",
+      "cannot_connect": "Unable to connect to Baterway.",
+      "unknown": "Unexpected configuration error."
+    },
+    "abort": {
+      "already_configured": "This battery list is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "StorCube battery stack",
+        "description": "Enter the ID of every module to query, including master and slave, separated by commas. Raw measurements appear in downloaded diagnostics.",
+        "data": {
+          "device_ids": "IDs of all modules"
+        }
+      }
+    },
+    "error": {
+      "no_device_ids": "Enter at least one battery ID."
+    }
+  }
+}

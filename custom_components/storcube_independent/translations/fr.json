@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "StorCube Batteries (indépendant)",
+        "description": "Saisissez l’identifiant de chaque batterie à interroger, maître et esclave inclus, séparés par une virgule ou une nouvelle ligne. Le maître seul ne transmet pas toujours les mesures de l’esclave.",
+        "data": {
+          "device_ids": "Identifiants des batteries",
+          "login_name": "Identifiant du compte StorCube",
+          "password": "Mot de passe",
+          "app_code": "Code application"
+        },
+        "data_description": {
+          "device_ids": "Ajoutez l’identifiant de chaque module dont vous voulez lire les valeurs, y compris l’esclave.",
+          "app_code": "Laissez Storcube sauf si votre compte utilise une autre application Baterway."
+        }
+      }
+    },
+    "error": {
+      "no_device_ids": "Saisissez au moins un identifiant de batterie.",
+      "invalid_auth": "Baterway a refusé le compte ou le mot de passe.",
+      "cannot_connect": "Impossible de joindre Baterway.",
+      "unknown": "Erreur inattendue pendant la configuration."
+    },
+    "abort": {
+      "already_configured": "Cette liste de batteries est déjà configurée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Batteries de la pile StorCube",
+        "description": "Saisissez l’identifiant de chaque module à interroger, y compris la batterie maître et la batterie esclave, séparés par une virgule. Les mesures brutes reçues apparaissent dans le téléchargement des diagnostics.",
+        "data": {
+          "device_ids": "Identifiants de tous les modules"
+        }
+      }
+    },
+    "error": {
+      "no_device_ids": "Saisissez au moins un identifiant de batterie."
+    }
+  }
+}
